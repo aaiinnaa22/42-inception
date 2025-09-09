@@ -1,11 +1,18 @@
 
 COMPOSE_FLAGS = docker-compose -f
 COMPOSE_FILE= srcs/docker-compose.yml
+HOME_DATA := $(HOME)/data
 
-.PHONY: all build up down logs restart clean
-all: build up
+.PHONY: all build up down logs restart clean dirs
+all: dirs build up
 
-build:
+dirs:
+	@echo ">>> Creating data directories in $(HOME_DATA)..."
+	mkdir -p $(HOME_DATA)/mariadb
+	mkdir -p $(HOME_DATA)/wordpress
+	@echo ">>> Done."
+
+build: dirs
 	$(COMPOSE_FLAGS) $(COMPOSE_FILE) build
 
 up:

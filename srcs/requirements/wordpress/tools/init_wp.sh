@@ -3,8 +3,10 @@ set -e
 
 WEB_ROOT="/var/www/html"
 CUSTOM_WP_CONFIG="/usr/local/etc/wp-config.php"
-ROOT_PASSWORD=$(cat /run/secrets/root_password)
-USER_PASSWORD=$(cat /run/secrets/user_password)
+MARIADB_ROOT_PASSWORD=$(cat /run/secrets/mariadb_root_password)
+MARIADB_USER_PASSWORD=$(cat /run/secrets/mariadb_user_password)
+WP_ADMIN_PASSWORD=$(cat /run/secrets/wp_admin_password)
+WP_USER_PASSWORD=$(cat /run/secrets/wp_user_password)
 
 echo ">>> Initializing WordPress..."
 
@@ -16,12 +18,6 @@ if [ ! -f "$WEB_ROOT/wp-config.php" ]; then
     cp -a /tmp/wordpress/. "$WEB_ROOT/"
     rm -rf /tmp/wordpress /tmp/wordpress.zip
     echo ">>> WordPress downloaded."
-fi
-
-# Copy your custom wp-config.php if present
-if [ -f "$CUSTOM_WP_CONFIG" ]; then
-    echo ">>> Using custom wp-config.php"
-    cp "$CUSTOM_WP_CONFIG" "$WEB_ROOT/wp-config.php"
 fi
 
 if ! getent group www-data > /dev/null; then
@@ -41,9 +37,41 @@ find "$WEB_ROOT" -type f -exec chmod 644 {} \;
 
 # Wait for MariaDB to be ready
 echo ">>> Waiting for MariaDB..."
-until mariadb -h "$HOST" -u root -p"$ROOT_PASSWORD" -e "SELECT 1;" >/dev/null 2>&1; do
+until mariadb -h "$HOST" -u root -p"$MARIADB_ROOT_PASSWORD" -e "SELECT 1;" >/dev/null 2>&1; do
     sleep 2
 done
+
+if [ ! -f "$WEB_ROOT/wp-config.php" ]; then
+    echo ">>> Generating wp-config.php..."
+    wp core config \
+        --path="$WEB_ROOT" \
+        --dbname="$DATABASE" \
+        --dbuser="$MARIADB_USER" \
+        --dbpass="$MARIADB_USER_PASSWORD" \
+        --dbhost="$HOST" \
+        --allow-root
+fi
+
+if  ! wp core is-installed --path="$WEB_ROOT" --allow-root; then
+    echo ">>> Running wp core install..."
+    wp core install \
+        --path="$WEB_ROOT" \
+        --url="$DOMAIN" \
+        --title="Inception wordpress" \
+        --admin_user="$WP_ADMIN" \
+        --admin_password="$WP_ADMIN_PASSWORD" \
+		--admin_email="$WP_ADMIN@example.com" \
+        --skip-email \
+        --allow-root
+
+	wp user create "$WP_USER" "$WP_USER@example.com" \
+		--path="$WEB_ROOT" \
+        --role=author \
+        --user_pass="$WP_USER_PASSWORD" \
+        --allow-root
+else
+    echo ">>> WordPress already installed."
+fi
 
 echo ">>> WordPress initialization complete."
 

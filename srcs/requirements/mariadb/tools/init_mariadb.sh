@@ -2,14 +2,14 @@
 set -e
 
 # Read passwords from secret files
-ROOT_PASSWORD=$(cat /run/secrets/root_password)
-USER_PASSWORD=$(cat /run/secrets/user_password)
+MARIADB_ROOT_PASSWORD=$(cat /run/secrets/mariadb_root_password)
+MARIADB_USER_PASSWORD=$(cat /run/secrets/mariadb_user_password)
 
 echo ">>> MARIADB HAS ENV:"
 echo "database: $DATABASE"
-echo "user: $USER"
-echo "root password: $ROOT_PASSWORD"
-echo "user password: $USER_PASSWORD"
+echo "user: $MARIADB_USER"
+echo "root password: $MARIADB_ROOT_PASSWORD"
+echo "user password: $MARIADB_USER_PASSWORD"
 
 # Initialize database if empty
 if [ ! -d "/var/lib/mysql/mysql" ]; then
@@ -20,12 +20,12 @@ if [ ! -d "/var/lib/mysql/mysql" ]; then
     mariadbd --bootstrap --user=mysql <<EOSQL
 USE mysql;
 FLUSH PRIVILEGES;
-ALTER USER 'root'@'localhost' IDENTIFIED BY '${ROOT_PASSWORD}';
-CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '${ROOT_PASSWORD}';
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}';
+CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}';
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
 CREATE DATABASE IF NOT EXISTS ${DATABASE};
-CREATE USER IF NOT EXISTS '${USER}'@'%' IDENTIFIED BY '${USER_PASSWORD}';
-GRANT ALL PRIVILEGES ON ${DATABASE}.* TO '${USER}'@'%';
+CREATE USER IF NOT EXISTS '${MARIADB_USER}'@'%' IDENTIFIED BY '${MARIADB_USER_PASSWORD}';
+GRANT ALL PRIVILEGES ON ${DATABASE}.* TO '${MARIADB_USER}'@'%';
 FLUSH PRIVILEGES;
 EOSQL
 
