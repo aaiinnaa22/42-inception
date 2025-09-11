@@ -1,28 +1,23 @@
 FROM alpine:3.21
 
-# Install PHP and utilities
 RUN apk update && apk add mariadb-client \
-	php84 \
-	php84-fpm \
-	php84-phar \
-	php84-curl \
-	php84-mysqli \
-	php84-iconv \
-	php84-json \
-	wget \
-	curl \
-	php84-mbstring
+	php83 \
+	php83-fpm \
+	php83-phar \
+	php83-curl \
+	php83-mysqli \
+	php83-iconv \
+	php83-json \
+	wget
 
-RUN ln -s /usr/bin/php84 /usr/bin/php
+COPY ./conf/www.conf /etc/php83/php-fpm.d/www.conf
 
-RUN curl -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
-    && chmod +x /usr/local/bin/wp
-
-COPY ./conf/www.conf /etc/php82/php-fpm.d/www.conf
-#really used? ^
+RUN mkdir -p /var/www/wp /var/www/html
 
 COPY ./tools/init_wp.sh /usr/local/bin/init_wp.sh
 RUN chmod +x /usr/local/bin/init_wp.sh
+
+RUN adduser -D -H -s /sbin/nologin -g www-data -G www-data www-data
 
 EXPOSE 9000
 

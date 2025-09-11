@@ -3,7 +3,7 @@ COMPOSE_FLAGS = docker-compose -f
 COMPOSE_FILE= srcs/docker-compose.yml
 HOME_DATA := $(HOME)/data
 
-.PHONY: all build up down logs restart clean dirs
+.PHONY: all build up down logs restart clean dirs fclean
 all: dirs build up
 
 dirs:
@@ -24,6 +24,11 @@ down:
 clean:
 	$(COMPOSE_FLAGS) $(COMPOSE_FILE) down -v --rmi all --remove-orphans
 	docker system prune -af --volumes
+
+fclean: clean #requires sudo password
+	sudo rm -rf $(HOME_DATA)/mariadb || true
+	sudo rm -rf $(HOME_DATA)/wordpress || true
+	sudo rm -rf $(HOME_DATA) || true
 
 logs:
 	$(COMPOSE_FLAGS) $(COMPOSE_FILE) logs -f

@@ -5,12 +5,6 @@ set -e
 MARIADB_ROOT_PASSWORD=$(cat /run/secrets/mariadb_root_password)
 MARIADB_USER_PASSWORD=$(cat /run/secrets/mariadb_user_password)
 
-echo ">>> MARIADB HAS ENV:"
-echo "database: $DATABASE"
-echo "user: $MARIADB_USER"
-echo "root password: $MARIADB_ROOT_PASSWORD"
-echo "user password: $MARIADB_USER_PASSWORD"
-
 # Initialize database if empty
 if [ ! -d "/var/lib/mysql/mysql" ]; then
     echo ">>> Initializing MariaDB database..."
@@ -29,11 +23,12 @@ GRANT ALL PRIVILEGES ON ${DATABASE}.* TO '${MARIADB_USER}'@'%';
 FLUSH PRIVILEGES;
 EOSQL
 
-    echo ">>> Database initialization complete."
 else
     echo ">>> MariaDB already exists, skipping initialization."
 fi
 
-echo ">>> Starting MariaDB in foreground..."
-mariadbd --defaults-file=/usr/local/etc/mariadb.conf
+echo "--------------------------------------------"
+echo "| ★ ★ MariaDB initialization complete! ★ ★ |"
+echo "--------------------------------------------"
+exec mariadbd --defaults-file=/usr/local/etc/mariadb.conf
 
