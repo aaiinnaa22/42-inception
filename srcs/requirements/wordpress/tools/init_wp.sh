@@ -33,21 +33,11 @@ if [ ! -f "$WEB_ROOT/wp-config.php" ]; then
         --allow-root
 
 	echo ">>> Enabling HTTPS for Wordpress..."
-	WP_CONFIG="$WEB_ROOT/wp-config.php"
-
-	sed -i "/FORCE_SSL_ADMIN/d" "$WP_CONFIG"
-	sed -i "/HTTP_X_FORWARDED_PROTO/d" "$WP_CONFIG"
-	sed -i "/\$_SERVER\['HTTPS'\]/d" "$WP_CONFIG"
-
-	cat <<'EOF' >> "$WP_CONFIG"
-
-// Force SSL for admin and detect HTTPS behind proxy
-define('FORCE_SSL_ADMIN', true);
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-    $_SERVER['HTTPS'] = 'on';
-}
-
-EOF
+    sed -i "/\/\* That's all, stop editing/i \
+if ((!empty(\$_SERVER['HTTPS']) && \$_SERVER['HTTPS'] !== 'off') || (!empty(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) { \$_SERVER['HTTPS'] = 'on'; } \
+if (!defined('FORCE_SSL_ADMIN')) define('FORCE_SSL_ADMIN', true); \
+define('WP_HOME', 'https://$DOMAIN'); \
+define('WP_SITEURL', 'https://$DOMAIN');" "$WEB_ROOT/wp-config.php"
 
 	echo ">>> Installing core..."
     wp core install \
@@ -59,6 +49,11 @@ EOF
         --admin_email="$WP_ADMIN@example.com" \
         --skip-email \
         --allow-root
+
+	echo ">>> Forcing HTTPS in DB..."
+    wp option update siteurl "https://$DOMAIN" --path="$WEB_ROOT" --allow-root
+    wp option update home "https://$DOMAIN" --path="$WEB_ROOT" --allow-root
+    wp search-replace "http://$DOMAIN" "https://$DOMAIN" --path="$WEB_ROOT" --all-tables --allow-root
 
 	echo ">>> Creating a user..."
 	wp user create "$WP_USER" "$WP_USER@example.com" --role=author --user_pass="$WP_USER_PASSWORD" --path="$WEB_ROOT" --allow-root
