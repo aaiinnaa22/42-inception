@@ -26,6 +26,7 @@ clean:
 	docker system prune -af --volumes
 
 fclean: clean #requires sudo password
+	@echo ">>> Deleting data"
 	sudo rm -rf $(HOME_DATA)/mariadb || true
 	sudo rm -rf $(HOME_DATA)/wordpress || true
 	sudo rm -rf $(HOME_DATA) || true

@@ -1,5 +1,9 @@
 FROM alpine:3.21
 
+#nginx  -> the web server itself servers HTTPS requests for wordpress
+#openssl -> generate SSL certificate for HTTPS
+#gettext  -> for env substituting
+#netcat-openbsd -> nv to check connectivity with wordpress
 RUN apk update && apk add nginx openssl gettext netcat-openbsd
 
 RUN mkdir -p /etc/nginx/ssl

@@ -1,20 +1,20 @@
 services:
   mariadb:
-    build:
+    build: #how to build a custom image (Dockerfile)
       context: ./requirements/mariadb
     container_name: mariadb
     image: mariadb
-    restart: always
+    restart: always #restarts automatically in case of crash
     env_file:
-      - .env
-    secrets:
+      - .env #the container will have the env vars defined in this file
+    secrets:  #securely pass sensitive info to the container (will not be found as an env)
       - mariadb_root_password
       - mariadb_user_password
-    ports:
+    ports: #ports open for the container
       - "3306:3306"
-    networks:
+    networks: #custom network for the containers to communicate securely
       - inception_net
-    volumes:
+    volumes: #physical storage is at home/data/mariadb, the name of that storage is mariadb_data. Internally, the path is /var/lib/mysql
       - mariadb_data:/var/lib/mysql
 
   wordpress:
@@ -56,12 +56,12 @@ services:
     volumes:
        - wordpress_data:/var/www/html
 
-volumes:
+volumes: #store data on host
   mariadb_data:
     name: mariadb_data
     driver: local
-    driver_opts:
-      type: none
+    driver_opts: #bind mount, "this directory should be available inside the container as a volume"
+      type: none #use my existing host folder home/data/mariadb, not something else
       device: ${HOME}/data/mariadb
       o: bind
   wordpress_data:
@@ -86,4 +86,4 @@ secrets:
 networks:
   inception_net:
     name: inception_net
-    driver: bridge
+    driver: bridge #private internal network

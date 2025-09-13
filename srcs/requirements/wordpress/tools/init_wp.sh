@@ -1,14 +1,15 @@
 #!/bin/sh
 set -e
 
-echo "memory_limit = 512M" >> /etc/php83/php.ini
+echo "memory_limit = 512M" >> /etc/php83/php.ini #increase php memory limit, needed for all the wp stuff
 WEB_ROOT="/var/www/html"
 MARIADB_ROOT_PASSWORD=$(cat /run/secrets/mariadb_root_password)
 MARIADB_USER_PASSWORD=$(cat /run/secrets/mariadb_user_password)
 WP_ADMIN_PASSWORD=$(cat /run/secrets/wp_admin_password)
 WP_USER_PASSWORD=$(cat /run/secrets/wp_user_password)
 
-echo ">>> Downloading WP-CLI..."
+#command-line tool to manage wordpress
+echo ">>> Downloading WP-CLI..." 
 wget -q https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -O /usr/local/bin/wp
 chmod +x /usr/local/bin/wp
 
@@ -20,9 +21,10 @@ done
 # Only run WordPress install/config if wp-config.php is missing
 if [ ! -f "$WEB_ROOT/wp-config.php" ]; then
     echo ">>> Installing WordPress..."
-    wp core download --path="$WEB_ROOT" --allow-root
+    wp core download --path="$WEB_ROOT" --allow-root #downloads wordpress core files
 
 	echo ">>> Creating config..."
+	#make a conf with my database and connection info
     wp config create \
         --path="$WEB_ROOT" \
         --dbname="$DATABASE" \
@@ -32,6 +34,7 @@ if [ ! -f "$WEB_ROOT/wp-config.php" ]; then
         --force \
         --allow-root
 
+	#force HTTPS in conf
 	echo ">>> Enabling HTTPS for Wordpress..."
     sed -i "/\/\* That's all, stop editing/i \
 if ((!empty(\$_SERVER['HTTPS']) && \$_SERVER['HTTPS'] !== 'off') || (!empty(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) { \$_SERVER['HTTPS'] = 'on'; } \
@@ -40,6 +43,7 @@ define('WP_HOME', 'https://$DOMAIN'); \
 define('WP_SITEURL', 'https://$DOMAIN');" "$WEB_ROOT/wp-config.php"
 
 	echo ">>> Installing core..."
+	#does the initial wordpress installation, create url, admin and site title
     wp core install \
         --path="$WEB_ROOT" \
         --url="$DOMAIN" \
@@ -50,6 +54,7 @@ define('WP_SITEURL', 'https://$DOMAIN');" "$WEB_ROOT/wp-config.php"
         --skip-email \
         --allow-root
 
+	#force HTTPS  in database
 	echo ">>> Forcing HTTPS in DB..."
     wp option update siteurl "https://$DOMAIN" --path="$WEB_ROOT" --allow-root
     wp option update home "https://$DOMAIN" --path="$WEB_ROOT" --allow-root
@@ -61,6 +66,7 @@ else
     echo ">>> WordPress is already downloaded, installed, and configured."
 fi
 
+#ensures wordpress files are owned by php user
 echo ">>> Fixing permissions..."
 chown -R www-data:www-data "$WEB_ROOT"
 chmod -R 755 "$WEB_ROOT"
@@ -68,4 +74,7 @@ chmod -R 755 "$WEB_ROOT"
 echo "----------------------------------------------"
 echo "| ★ ★ Wordpress initialization complete! ★ ★ |"
 echo "----------------------------------------------"
+
+#run php fastcgi process manager, runs scripts and hendles requests from nginx. -F = in the foreground
+
 exec php-fpm83 -F

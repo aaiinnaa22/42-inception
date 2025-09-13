@@ -11,7 +11,7 @@ if [ ! -d "/var/lib/mysql/mysql" ]; then
     mariadb-install-db --user=mysql --datadir=/var/lib/mysql
 
     echo ">>> Configuring root and user..."
-    mariadbd --bootstrap --user=mysql <<EOSQL
+    mariadbd --bootstrap --user=mysql --skip-log-bin --skip-networking >/dev/null 2>&1 <<EOSQL
 USE mysql;
 FLUSH PRIVILEGES;
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}';
@@ -30,5 +30,7 @@ fi
 echo "--------------------------------------------"
 echo "| ★ ★ MariaDB initialization complete! ★ ★ |"
 echo "--------------------------------------------"
+
+#start database inside the container, with the conf i chose, runs by default in foreground
 exec mariadbd --defaults-file=/usr/local/etc/mariadb.conf
 
