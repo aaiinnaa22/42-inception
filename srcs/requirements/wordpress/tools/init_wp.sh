@@ -9,7 +9,7 @@ WP_ADMIN_PASSWORD=$(cat /run/secrets/wp_admin_password)
 WP_USER_PASSWORD=$(cat /run/secrets/wp_user_password)
 
 #command-line tool to manage wordpress
-echo ">>> Downloading WP-CLI..." 
+echo ">>> Downloading WP-CLI..."
 wget -q https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -O /usr/local/bin/wp
 chmod +x /usr/local/bin/wp
 
@@ -53,12 +53,6 @@ define('WP_SITEURL', 'https://$DOMAIN');" "$WEB_ROOT/wp-config.php"
         --admin_email="$WP_ADMIN@example.com" \
         --skip-email \
         --allow-root
-
-	#force HTTPS  in database
-	echo ">>> Forcing HTTPS in DB..."
-    wp option update siteurl "https://$DOMAIN" --path="$WEB_ROOT" --allow-root
-    wp option update home "https://$DOMAIN" --path="$WEB_ROOT" --allow-root
-    wp search-replace "http://$DOMAIN" "https://$DOMAIN" --path="$WEB_ROOT" --all-tables --allow-root
 
 	echo ">>> Creating a user..."
 	wp user create "$WP_USER" "$WP_USER@example.com" --role=author --user_pass="$WP_USER_PASSWORD" --path="$WEB_ROOT" --allow-root
