@@ -24,7 +24,6 @@ chmod 640 /etc/nginx/ssl/server.key
 
 echo ">>> Replacing DOMAIN env in nginx conf..."
 envsubst '$DOMAIN' < /etc/nginx/temp_nginx.conf > /etc/nginx/nginx.conf
-rm -rf /etc/nginx/temp_nginx.conf
 
 
 echo "------------------------------------------"

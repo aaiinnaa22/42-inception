@@ -139,6 +139,49 @@ done
 
 ###########################################
 
+
+echo
+echo "=== TESTING WORDPRESS -> MARIADB (3306) ==="
+echo
+docker exec -i wordpress sh -c "nc -vz mariadb 3306 >/dev/null 2>&1"
+if [ $? -eq 0 ]; then
+    ok "WordPress can reach MariaDB on 3306"
+else
+    fail "WordPress cannot reach MariaDB on 3306"
+fi
+
+echo
+echo "=== TESTING NGINX -> WordPress (9000) ==="
+echo
+docker exec -i nginx sh -c "nc -vz wordpress 9000 >/dev/null 2>&1"
+if [ $? -eq 0 ]; then
+    ok "NGINX can reach WordPress on 9000"
+else
+    fail "NGINX cannot reach WordPress on 9000"
+fi
+
+echo
+echo "=== TESTING WORDPRESS -> NGINX (443) ==="
+echo
+docker exec -i wordpress sh -c "nc -vz nginx 443 >/dev/null 2>&1"
+if [ $? -eq 0 ]; then
+    ok "WordPress can reach NGINX on 443"
+else
+    fail "WordPress cannot reach NGINX on 443"
+fi
+
+echo
+echo "=== TESTING MARIADB -> WORDPRESS (9000) ==="
+echo
+docker exec -i mariadb sh -c "nc -vz wordpress 9000 >/dev/null 2>&1"
+if [ $? -eq 0 ]; then
+    ok "MariaDB can reach WordPress on 9000"
+else
+    fail "MariaDB cannot reach WordPress on 9000 (expected if firewalled)"
+fi
+
+###########################################
+
 echo
 echo "=== CHECKING DOCKER VOLUMES ==="
 echo
@@ -185,11 +228,11 @@ echo
 echo "=== CHECKING WORDPRESS USERS IN DATABASE ==="
 echo
 # Query all WordPress users and their roles
-USERS=$(docker exec -i mariadb sh -c "mariadb -u${MARIADB_USER} -p${MARIADB_USER_PASSWORD} -h mariadb -D ${DATABASE} -N -e 'SELECT u.user_login, m.meta_value FROM wp_users u JOIN wp_usermeta m ON u.ID=m.user_id WHERE m.meta_key=\"wp_capabilities\";'")
+USERS=$(docker exec -i wordpress sh -c "mariadb -u${MARIADB_USER} -p${MARIADB_USER_PASSWORD} -h mariadb -D ${DATABASE} -N -e 'SELECT u.user_login, m.meta_value FROM wp_users u JOIN wp_usermeta m ON u.ID=m.user_id WHERE m.meta_key=\"wp_capabilities\";'")
 
 echo "Users found:"
 printf '%s\n' "$USERS" | awk '{print $1}'
-echo 
+echo
 
 USER_COUNT=$(printf '%s\n' "$USERS" | wc -l | tr -d ' ')
 [ "$USER_COUNT" -eq 2 ] && ok "Exactly 2 WordPress users found" || fail "Expected 2 users, found $USER_COUNT"

@@ -14,7 +14,7 @@ wget -q https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.pha
 chmod +x /usr/local/bin/wp
 
 echo ">>> Waiting for MariaDB..."
-until mariadb -h "$HOST" -u root -p"$MARIADB_ROOT_PASSWORD" -e "SELECT 1;" >/dev/null 2>&1; do
+until mariadb -h "$HOST" -u"$MARIADB_USER" -p"$MARIADB_USER_PASSWORD" -e "SELECT 1;" >/dev/null 2>&1; do
     sleep 2
 done
 
