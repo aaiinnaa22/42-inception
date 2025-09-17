@@ -80,7 +80,7 @@ done
 ###########################################
 
 echo
-echo "=== TESTING INTERNET ACCESS TO THE CONTAINERS ==="
+echo "=== TESTING INTERNET AND HOST ACCESS TO THE CONTAINERS ==="
 echo
 echo "Testing WordPress (port 9000)..."
 echo
@@ -135,6 +135,10 @@ for container in $EXPECTED; do
         fail "Container '$container' is NOT connected to '$EXPECTED_NET'"
     fi
 done
+
+
+###########################################
+
 
 
 ###########################################
@@ -228,7 +232,7 @@ echo
 echo "=== CHECKING WORDPRESS USERS IN DATABASE ==="
 echo
 # Query all WordPress users and their roles
-USERS=$(docker exec -i wordpress sh -c "mariadb -u${MARIADB_USER} -p${MARIADB_USER_PASSWORD} -h mariadb -D ${DATABASE} -N -e 'SELECT u.user_login, m.meta_value FROM wp_users u JOIN wp_usermeta m ON u.ID=m.user_id WHERE m.meta_key=\"wp_capabilities\";'")
+USERS=$(docker exec -i mariadb sh -c "mariadb -u${MARIADB_USER} -p${MARIADB_USER_PASSWORD} -D ${DATABASE} -N -e 'SELECT u.user_login, m.meta_value FROM wp_users u JOIN wp_usermeta m ON u.ID=m.user_id WHERE m.meta_key=\"wp_capabilities\";'")
 
 echo "Users found:"
 printf '%s\n' "$USERS" | awk '{print $1}'
