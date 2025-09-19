@@ -12,12 +12,12 @@ EXPECTED="nginx wordpress mariadb"
 RUNNING=$(docker ps --format '{{.Names}}')
 EXPECTED_NET="inception_net"
 EXPECTED_VOLUMES="mariadb_data wordpress_data"
-HOST_HOST_DIR="${HOME}/data"
+HOST_DIR="${HOME}/data"
 . ./srcs/.env
-MARIADB_ROOT_PASSWORD=$(cat ./../secrets/mariadb_root_password.txt)
-MARIADB_USER_PASSWORD=$(cat ./../secrets/mariadb_user_password.txt)
-WP_ADMIN_PASSWORD=$(cat ./../secrets/wp_admin_password.txt)
-WP_USER_PASSWORD=$(cat ./../secrets/wp_user_password.txt)
+MARIADB_ROOT_PASSWORD=$(cat ./secrets/mariadb_root_password.txt)
+MARIADB_USER_PASSWORD=$(cat ./secrets/mariadb_user_password.txt)
+WP_ADMIN_PASSWORD=$(cat ./secrets/wp_admin_password.txt)
+WP_USER_PASSWORD=$(cat ./secrets/wp_user_password.txt)
 
 
 
@@ -219,7 +219,7 @@ echo
 
 for vol in $EXPECTED_VOLUMES; do
     # Check the HOST directory exists (mariadb_data -> /home/login/data/mariadb, etc.)
-    DIR_PATH="$HOST_HOST_DIR/${vol%%_data}"  # strip "_data" suffix
+    DIR_PATH="$HOST_DIR/${vol%%_data}"  # strip "_data" suffix
     if [ -d "$DIR_PATH" ]; then
         ok "HOST directory '$DIR_PATH' exists"
     else
@@ -232,7 +232,10 @@ echo
 echo "=== CHECKING WORDPRESS USERS IN DATABASE ==="
 echo
 # Query all WordPress users and their roles
-USERS=$(docker exec -i mariadb sh -c "mariadb -u${MARIADB_USER} -p${MARIADB_USER_PASSWORD} -D ${DATABASE} -N -e 'SELECT u.user_login, m.meta_value FROM wp_users u JOIN wp_usermeta m ON u.ID=m.user_id WHERE m.meta_key=\"wp_capabilities\";'")
+
+USERS=$(docker exec -i mariadb \
+  sh -c "mariadb -u\"$MARIADB_USER\" -p\"$MARIADB_USER_PASSWORD\" -D \"$DATABASE\" -N -e 'SELECT u.user_login, m.meta_value FROM wp_users u JOIN wp_usermeta m ON u.ID=m.user_id WHERE m.meta_key=\"wp_capabilities\";'")
+
 
 echo "Users found:"
 printf '%s\n' "$USERS" | awk '{print $1}'
